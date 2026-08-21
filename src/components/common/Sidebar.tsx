@@ -48,7 +48,7 @@ export const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     {
       title: 'CRM & ARAÇLAR',
       items: [
-        { id: 'mileage_prediction', label: 'Akıllı Km & Bakım Motoru', icon: TrendingUp, badge: 'AI' },
+        { id: 'mileage_prediction', label: 'Periyodik Bakım & Km Motoru', icon: TrendingUp, badge: 'Oto' },
         { id: 'customers', label: 'Müşteri Yönetimi (CRM)', icon: Users },
         { id: 'vehicles', label: '360° Araç Dosyaları', icon: Car },
         { id: 'fleet', label: 'Kurumsal Filo Portalı', icon: Building, flag: 'fleet' },

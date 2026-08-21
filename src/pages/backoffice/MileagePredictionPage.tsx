@@ -127,14 +127,14 @@ export const MileagePredictionPage: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-black text-slate-900">
-                Akıllı Kilometre Tahminleme & Bakım Hatırlatma Motoru
+                Periyodik Kilometre & Bakım Hatırlatma Motoru
               </h1>
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
-                AI Algoritması
+                Otomatik Hesaplama
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Müşterilerin günlük km ortalamasını hesaplayıp bakımı gelmeden 15 gün önce otomatik WhatsApp çağrısı tetikleyin
+              Müşterilerin servisler arası kullanım ortalamasını hesaplayıp bakımı gelmeden 15 gün önce otomatik WhatsApp çağrısı tetikleyin
             </p>
           </div>
         </div>

@@ -179,7 +179,7 @@ export const TenantSettingsPage: React.FC = () => {
               { key: 'einvoice', label: 'GİB e-Fatura / e-Arşiv Entegrasyonu' },
               { key: 'whatsapp', label: 'WhatsApp Business Otomasyonları' },
               { key: 'advanced_reports', label: 'Gelişmiş BI Raporlama & Analitik' },
-              { key: 'ai_copilot', label: 'Yapay Zeka Servis Danışmanı Copilot' },
+              { key: 'mileage_prediction', label: 'Otomatik Kilometre & Bakım Hatırlatma Motoru' },
             ].map(f => (
               <div
                 key={f.key}
