@@ -3,6 +3,7 @@ import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
 import { CommandPalette } from './components/common/CommandPalette';
 import { VehicleIntakeModal } from './pages/backoffice/VehicleIntakeModal';
+import { QRScannerModal } from './components/qr/QRScannerModal';
 
 // Pages
 import { LandingPage } from './pages/landing/LandingPage';
@@ -11,6 +12,7 @@ import { AppointmentsPage } from './pages/backoffice/AppointmentsPage';
 import { WorkOrdersListPage } from './pages/backoffice/WorkOrdersListPage';
 import { WorkOrderDetailPage } from './pages/backoffice/WorkOrderDetailPage';
 import { CustomersVehiclesPage } from './pages/backoffice/CustomersVehiclesPage';
+import { MileagePredictionPage } from './pages/backoffice/MileagePredictionPage';
 import { InventoryPage } from './pages/backoffice/InventoryPage';
 import { TireHotelPage } from './pages/backoffice/TireHotelPage';
 import { WorkshopBaysPage } from './pages/backoffice/WorkshopBaysPage';
@@ -23,6 +25,7 @@ import { DataMigrationPage } from './pages/backoffice/DataMigrationPage';
 import { TenantSettingsPage } from './pages/backoffice/TenantSettingsPage';
 import { SuperAdminDashboard } from './pages/superAdmin/SuperAdminDashboard';
 import { PublicTenantLanding } from './pages/publicSite/PublicTenantLanding';
+import { QRTrackVehiclePage } from './pages/publicSite/QRTrackVehiclePage';
 
 export const App: React.FC = () => {
   // Default entry view is the Tanıtım (Marketing Landing) site
@@ -30,6 +33,7 @@ export const App: React.FC = () => {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<any>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isIntakeModalOpen, setIsIntakeModalOpen] = useState(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   const handleNavigate = (tab: string, itemData?: any) => {
     if (tab === 'work_order_detail' && itemData) {
@@ -50,6 +54,11 @@ export const App: React.FC = () => {
     return <PublicTenantLanding onBackToApp={() => setActiveTab('dashboard')} />;
   }
 
+  // If QR track page is open, show live tracking directly
+  if (activeTab === 'qr_track') {
+    return <QRTrackVehiclePage onBackToApp={() => setActiveTab('dashboard')} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-brand-500 selection:text-white">
       {/* Top Header */}
@@ -57,6 +66,7 @@ export const App: React.FC = () => {
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenNewIntake={() => setIsIntakeModalOpen(true)}
         onOpenNewAppointment={() => setActiveTab('appointments')}
+        onOpenQRScanner={() => setIsQRScannerOpen(true)}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
@@ -94,6 +104,8 @@ export const App: React.FC = () => {
                 onNavigate={handleNavigate}
               />
             )}
+
+            {activeTab === 'mileage_prediction' && <MileagePredictionPage />}
 
             {activeTab === 'customers' && (
               <CustomersVehiclesPage initialType="CUSTOMERS" onNavigate={handleNavigate} />
@@ -154,11 +166,21 @@ export const App: React.FC = () => {
         onNavigate={handleNavigate}
       />
 
-      {/* Digital Vehicle Intake Modal */}
+      {/* Digital Vehicle Intake Wizard Modal */}
       <VehicleIntakeModal
         isOpen={isIntakeModalOpen}
         onClose={() => setIsIntakeModalOpen(false)}
         onSuccess={(wo) => {
+          setSelectedWorkOrder(wo);
+          setActiveTab('work_order_detail');
+        }}
+      />
+
+      {/* Technician QR Scanner Modal */}
+      <QRScannerModal
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+        onSelectWorkOrder={(wo) => {
           setSelectedWorkOrder(wo);
           setActiveTab('work_order_detail');
         }}

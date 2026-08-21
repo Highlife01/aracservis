@@ -6,10 +6,11 @@ import { WorkOrder, WorkOrderStatus, EstimateItem, MPIItem, MPICondition } from 
 import { PlateBadge } from '../../components/vehicle/PlateBadge';
 import { WorkOrderStatusBadge } from '../../components/workOrder/WorkOrderStatusBadge';
 import { VehicleDamageCanvas } from '../../components/vehicle/VehicleDamageCanvas';
+import { QRKeyTagModal } from '../../components/qr/QRKeyTagModal';
 import { 
   ArrowLeft, Check, Send, Printer, Wrench, FileText, 
   Search, ShieldCheck, DollarSign, Plus, Trash2, ExternalLink, 
-  CheckCircle2, XCircle, AlertTriangle, MessageSquare, Clock, UserCheck 
+  CheckCircle2, XCircle, AlertTriangle, MessageSquare, Clock, UserCheck, QrCode, Tag 
 } from 'lucide-react';
 
 interface Props {
@@ -24,6 +25,7 @@ export const WorkOrderDetailPage: React.FC<Props> = ({ workOrder: initialWo, onB
 
   const [wo, setWo] = useState<WorkOrder>(initialWo);
   const [activeSubTab, setActiveSubTab] = useState<'INTAKE' | 'INSPECTION' | 'ESTIMATE' | 'WORKSHOP' | 'PAYMENT'>('ESTIMATE');
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   // Estimate Editor State
   const [newItemType, setNewItemType] = useState<EstimateItem['type']>('PART');
@@ -224,6 +226,15 @@ export const WorkOrderDetailPage: React.FC<Props> = ({ workOrder: initialWo, onB
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsQRModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-bold transition-all shadow-xs"
+            title="Karekodlu Anahtarlık ve Torpido Etiketi Yazdır"
+          >
+            <QrCode className="w-4 h-4" />
+            <span>QR Anahtar Etiketi</span>
+          </button>
+
           <button
             onClick={generateWhatsAppApprovalLink}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all"
@@ -751,6 +762,15 @@ export const WorkOrderDetailPage: React.FC<Props> = ({ workOrder: initialWo, onB
           </div>
         </div>
       )}
+
+      {/* QR Key & Windshield Tag Modal */}
+      <QRKeyTagModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        workOrder={wo}
+        vehicle={vehicle}
+        customer={customer}
+      />
     </div>
   );
 };

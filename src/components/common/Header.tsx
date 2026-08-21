@@ -6,13 +6,14 @@ import { UserRole } from '../../types';
 import { 
   Building2, UserCheck, Search, Bell, ExternalLink, 
   Plus, Wrench, Calendar, Sparkles, Shield, ChevronDown, 
-  Check, LogIn, LogOut, User as UserIcon 
+  Check, LogIn, LogOut, User as UserIcon, Camera, QrCode 
 } from 'lucide-react';
 
 interface Props {
   onOpenCommandPalette: () => void;
   onOpenNewIntake: () => void;
   onOpenNewAppointment: () => void;
+  onOpenQRScanner?: () => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
 }
@@ -21,6 +22,7 @@ export const Header: React.FC<Props> = ({
   onOpenCommandPalette,
   onOpenNewIntake,
   onOpenNewAppointment,
+  onOpenQRScanner,
   activeTab,
   setActiveTab
 }) => {
@@ -138,6 +140,16 @@ export const Header: React.FC<Props> = ({
           <ExternalLink className="w-3.5 h-3.5 text-brand-400" />
           <span>Müşteri Sitesi</span>
         </button>
+
+        {/* Link to QR Tracker */}
+        <button
+          onClick={() => setActiveTab('qr_track')}
+          className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-purple-300 hover:text-white hover:bg-purple-950/40 border border-purple-500/20 transition-all"
+          title="Karekodlu canlı araç takip ekranı"
+        >
+          <QrCode className="w-3.5 h-3.5 text-purple-400" />
+          <span>QR Takip</span>
+        </button>
       </div>
 
       {/* Middle: Fast Search Omnibox Trigger (Ctrl+K) */}
@@ -158,6 +170,18 @@ export const Header: React.FC<Props> = ({
 
       {/* Right: Quick Actions, Google Sign-In & Role Switcher */}
       <div className="flex items-center gap-2">
+        {/* QR Scanner Trigger */}
+        {onOpenQRScanner && (
+          <button
+            onClick={onOpenQRScanner}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 font-semibold text-xs transition-all active:scale-95 shadow-sm"
+            title="Kamera ile QR Kod Oku"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">QR Tara</span>
+          </button>
+        )}
+
         {/* Quick Action: New Vehicle Intake */}
         <button
           onClick={onOpenNewIntake}

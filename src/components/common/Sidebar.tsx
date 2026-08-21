@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Calendar, ClipboardList, Search, Wrench, 
   UserCheck, Users, Car, Building, Package, ShoppingCart, 
   Layers, Wallet, FileSpreadsheet, MessageSquare, BarChart3, 
-  FileUp, Sliders, Zap, Shield, Globe, Award, Sparkles 
+  FileUp, Sliders, Zap, Shield, Globe, Award, Sparkles, TrendingUp, QrCode 
 } from 'lucide-react';
 
 interface MenuItem {
@@ -48,6 +48,7 @@ export const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     {
       title: 'CRM & ARAÇLAR',
       items: [
+        { id: 'mileage_prediction', label: 'Akıllı Km & Bakım Motoru', icon: TrendingUp, badge: 'AI' },
         { id: 'customers', label: 'Müşteri Yönetimi (CRM)', icon: Users },
         { id: 'vehicles', label: '360° Araç Dosyaları', icon: Car },
         { id: 'fleet', label: 'Kurumsal Filo Portalı', icon: Building, flag: 'fleet' },
@@ -78,10 +79,11 @@ export const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       ]
     },
     {
-      title: 'SİSTEM & YÖNETİM',
+      title: 'PORTAL & SİSTEM',
       items: [
-        { id: 'landing', label: 'Platform Tanıtım Sitesi', icon: Globe },
+        { id: 'qr_track', label: 'Karekodlu Servis Takibi', icon: QrCode },
         { id: 'public_site', label: 'Müşteri Randevu Sitesi', icon: Sparkles },
+        { id: 'landing', label: 'Platform Tanıtım Sitesi', icon: Globe },
         { id: 'settings', label: 'Şirket & Şube Ayarları', icon: Sliders },
         { id: 'super_admin', label: 'Platform Super Admin', icon: Shield, superAdminOnly: true },
       ]
