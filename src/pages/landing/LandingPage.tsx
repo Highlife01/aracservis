@@ -227,7 +227,7 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
                   disabled={isLoggingIn}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-sky-600 hover:from-brand-500 hover:to-sky-500 text-white font-extrabold text-xs shadow-lg shadow-brand-500/25 transition-all active:scale-95 border border-brand-500/20"
                 >
-                  <span>14 Gün Ücretsiz Başla</span>
+                  <span>60 Gün Ücretsiz Başla</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </>
@@ -314,7 +314,7 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
                     <path fill="#ffffff" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.98 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
                     <path fill="#ffffff" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.27 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
                   </svg>
-                  <span>{isLoggingIn ? 'Giriş Yapılıyor...' : 'Google ile 14 Gün Ücretsiz Başla'}</span>
+                  <span>{isLoggingIn ? 'Giriş Yapılıyor...' : 'Google ile 60 Gün Ücretsiz Başla'}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
 
@@ -762,7 +762,7 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
               İşletmenizin Büyüklüğüne Uygun Paketi Seçin
             </h2>
             <p className="text-sm text-slate-600 max-w-md mx-auto">
-              Gizli ücret yok, kurulum masrafı yok. 14 gün ücretsiz deneyin.
+              Gizli ücret yok, kurulum masrafı yok. 60 gün ücretsiz deneyin.
             </p>
 
             {/* Monthly / Annual Toggle */}
@@ -831,7 +831,7 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
                 onClick={firebaseUser ? onEnterPanel : handleLogin}
                 className="w-full py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs transition-all shadow-xs"
               >
-                14 Gün Ücretsiz Başla
+                60 Gün Ücretsiz Başla
               </button>
             </div>
 
@@ -890,7 +890,7 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
                 onClick={firebaseUser ? onEnterPanel : handleLogin}
                 className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-600 to-sky-600 hover:brightness-105 text-white font-extrabold text-xs transition-all shadow-lg shadow-brand-500/25 active:scale-95"
               >
-                14 Gün Ücretsiz Başla →
+                60 Gün Ücretsiz Başla →
               </button>
             </div>
 
@@ -1032,7 +1032,7 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
               },
               {
                 q: 'Ücretsiz deneme süresi bittiğinde ne olur?',
-                a: '14 günlük deneme süresince hiçbir kredi kartı bilgisi istenmez. Süre sonunda memnun kalırsanız dilediğiniz paketi seçerek çalışmaya devam edebilirsiniz; verileriniz asla silinmez.'
+                a: '60 günlük deneme süresince hiçbir kredi kartı bilgisi istenmez. Süre sonunda memnun kalırsanız dilediğiniz paketi seçerek çalışmaya devam edebilirsiniz; verileriniz asla silinmez.'
               }
             ].map((faq, i) => (
               <div
@@ -1065,7 +1065,7 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
               Servisinizi Geleceğe Taşımaya Hazır mısınız?
             </h2>
             <p className="text-sm sm:text-base text-sky-100 max-w-xl mx-auto">
-              14 gün boyunca tüm modülleri sınırsız ve ücretsiz deneyin. Kredi kartı gerekmez.
+              60 gün boyunca tüm modülleri sınırsız ve ücretsiz deneyin. Kredi kartı gerekmez.
             </p>
             <div className="pt-2">
               <button
