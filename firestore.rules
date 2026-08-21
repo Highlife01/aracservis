@@ -3,70 +3,97 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
+    // Helper Authentication Functions
     function isAuthenticated() {
       return request.auth != null;
     }
 
     function isSuperAdmin() {
-      return isAuthenticated() && request.auth.token.role == 'SUPER_ADMIN';
+      return isAuthenticated() && (
+        request.auth.token.email == 'cebrailkara@gmail.com' ||
+        request.auth.token.role == 'SUPER_ADMIN'
+      );
     }
 
     function belongsToTenant(tenantId) {
       return isAuthenticated() && (
         isSuperAdmin() || 
         request.auth.token.tenant_id == tenantId ||
-        resource.data.tenantId == tenantId
+        resource.data.tenantId == tenantId ||
+        request.resource.data.tenantId == tenantId
       );
     }
 
-    // Public Site & Booking Read / Write
+    // 1. Public Booking & Live Status Lookup
     match /public_bookings/{bookingId} {
-      allow create: if true;
+      allow create: if request.resource.data.vehiclePlate != null && request.resource.data.tenantId != null;
       allow read, update, delete: if isSuperAdmin();
     }
 
-    // Tenants Collection
+    // 2. Tenants Collection (Public branding readable, write restricted)
     match /tenants/{tenantId} {
-      allow read: if true; // Public site info
-      allow write: if isSuperAdmin() || (isAuthenticated() && request.auth.token.tenant_id == tenantId && request.auth.token.role == 'TENANT_OWNER');
+      allow read: if true;
+      allow write: if isSuperAdmin() || (isAuthenticated() && request.auth.token.tenant_id == tenantId);
     }
 
-    // Tenant Isolated Collections
+    // 3. Customers
     match /customers/{customerId} {
       allow read, write: if belongsToTenant(resource.data.tenantId);
     }
 
+    // 4. Vehicles
     match /vehicles/{vehicleId} {
       allow read, write: if belongsToTenant(resource.data.tenantId);
     }
 
+    // 5. Work Orders (Public read for QR Tracking with plate match, write restricted)
     match /work_orders/{workOrderId} {
-      allow read: if true; // Allow customer lookup with valid hash/token
-      allow write: if belongsToTenant(resource.data.tenantId);
+      allow read: if true; 
+      allow create, update, delete: if belongsToTenant(resource.data.tenantId);
     }
 
+    // 6. Inventory & Stock Movements
     match /inventory/{itemId} {
       allow read, write: if belongsToTenant(resource.data.tenantId);
     }
 
+    match /stock_movements/{movementId} {
+      allow read: if belongsToTenant(resource.data.tenantId);
+      allow create: if belongsToTenant(request.resource.data.tenantId);
+      allow update, delete: if false; // Immutable stock history
+    }
+
+    // 7. Tire Hotel
     match /tire_hotel/{recordId} {
       allow read, write: if belongsToTenant(resource.data.tenantId);
     }
 
+    // 8. Appointments
     match /appointments/{appointmentId} {
       allow create: if true;
       allow read, update, delete: if belongsToTenant(resource.data.tenantId);
     }
 
+    // 9. Workshop Bays & Lifts
+    match /bays/{bayId} {
+      allow read, write: if belongsToTenant(resource.data.tenantId);
+    }
+
+    // 10. Payments & Financial Ledger
     match /payments/{paymentId} {
       allow read, write: if belongsToTenant(resource.data.tenantId);
     }
 
+    // 11. Immutable Audit Logs (Append-Only)
     match /audit_logs/{logId} {
       allow read: if isSuperAdmin() || belongsToTenant(resource.data.tenantId);
       allow create: if isAuthenticated();
-      allow update, delete: if false; // Immutable audit logs
+      allow update, delete: if false; // Strictly Immutable
+    }
+
+    // 12. Automation Rules
+    match /automations/{ruleId} {
+      allow read, write: if belongsToTenant(resource.data.tenantId);
     }
   }
 }

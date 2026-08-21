@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../core/AuthContext';
 import { useTenant } from '../../core/TenantContext';
+import { store } from '../../services/store';
 import { 
   LayoutDashboard, Calendar, ClipboardList, Search, Wrench, 
   UserCheck, Users, Car, Building, Package, ShoppingCart, 
@@ -33,13 +34,22 @@ export const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const { currentUser, isSuperAdmin } = useAuth();
   const { currentTenant } = useTenant();
 
+  // Dynamic counts from live store
+  const workOrders = store.getWorkOrders(currentTenant.id);
+  const inventory = store.getInventory(currentTenant.id);
+  const appointments = store.getAppointments(currentTenant.id);
+
+  const activeWorkOrderCount = workOrders.filter(w => !['DELIVERED', 'CLOSED', 'CANCELLED'].includes(w.status)).length;
+  const lowStockCount = inventory.filter(i => i.stockAvailable <= i.minStockLevel).length;
+  const todayAptCount = appointments.filter(a => a.status === 'CONFIRMED' || a.status === 'REQUESTED').length;
+
   const menuSections: MenuSection[] = [
     {
       title: 'OPERASYON & ATÖLYE',
       items: [
         { id: 'dashboard', label: 'Komuta Merkezi', icon: LayoutDashboard, badge: 'Canlı' },
-        { id: 'appointments', label: 'Randevular & Takvim', icon: Calendar },
-        { id: 'work_orders', label: 'İş Emirleri & Kabul', icon: ClipboardList, badgeCount: 3 },
+        { id: 'appointments', label: 'Randevular & Takvim', icon: Calendar, badgeCount: todayAptCount > 0 ? todayAptCount : undefined },
+        { id: 'work_orders', label: 'İş Emirleri & Kabul', icon: ClipboardList, badgeCount: activeWorkOrderCount > 0 ? activeWorkOrderCount : undefined },
         { id: 'inspection', label: 'Dijital Ekspertiz (MPI)', icon: Search },
         { id: 'workshop_bays', label: 'Atölye & Lift Matrisi', icon: Wrench },
         { id: 'technician_center', label: 'Teknisyen Merkezi', icon: UserCheck, flag: 'mobile_pwa' },
@@ -57,7 +67,7 @@ export const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     {
       title: 'STOK & LASTİK',
       items: [
-        { id: 'inventory', label: 'Stok & Yedek Parça', icon: Package, badgeAlert: 1, flag: 'inventory' },
+        { id: 'inventory', label: 'Stok & Yedek Parça', icon: Package, badgeAlert: lowStockCount > 0 ? lowStockCount : undefined, flag: 'inventory' },
         { id: 'purchasing', label: 'Satın Alma & Tedarik', icon: ShoppingCart },
         { id: 'tire_hotel', label: 'Lastik Oteli & Depo', icon: Layers, flag: 'tire_hotel' },
       ]

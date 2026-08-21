@@ -83,7 +83,13 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (currentTenant.branding.primaryColor) {
       document.documentElement.style.setProperty('--primary', currentTenant.branding.primaryColor);
     }
-  }, [currentTenant]);
+    // Start Realtime Firestore Sync
+    store.startRealtimeSync(currentTenant.id);
+
+    return () => {
+      store.stopRealtimeSync();
+    };
+  }, [currentTenant.id]);
 
   return (
     <TenantContext.Provider
