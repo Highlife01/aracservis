@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useTenant } from '../../core/TenantContext';
 import { useAuth } from '../../core/AuthContext';
+import { useNotification } from '../../core/NotificationContext';
 import { UserRole } from '../../types';
 import { 
   Building2, UserCheck, Search, Bell, ExternalLink, 
-  Plus, Wrench, Calendar, Sparkles, Shield, ChevronDown, Check 
+  Plus, Wrench, Calendar, Sparkles, Shield, ChevronDown, 
+  Check, LogIn, LogOut, User as UserIcon 
 } from 'lucide-react';
 
 interface Props {
@@ -23,11 +25,32 @@ export const Header: React.FC<Props> = ({
   setActiveTab
 }) => {
   const { currentTenant, tenants, switchTenant } = useTenant();
-  const { currentUser, switchRole } = useAuth();
+  const { currentUser, firebaseUser, loginWithGoogle, logout, switchRole, isSuperAdmin } = useAuth();
+  const { showSuccess, showError } = useNotification();
+
   const [tenantDropdownOpen, setTenantDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoggingIn(true);
+      await loginWithGoogle();
+      showSuccess('Giriş Başarılı', 'Google hesabı ile oturum açıldı.');
+    } catch (err: any) {
+      showError('Giriş Hatası', err.message || 'Google ile giriş yapılırken bir sorun oluştu.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    showSuccess('Çıkış Yapıldı', 'Oturum kapatıldı.');
+  };
 
   const rolesList: { id: UserRole; label: string; desc: string }[] = [
+    { id: 'SUPER_ADMIN', label: 'SaaS Super Admin (Cebrail Kara)', desc: 'Tüm tenantlar, paketler, audit' },
     { id: 'TENANT_OWNER', label: 'İşletme Sahibi / GM', desc: 'Tam yetki, ciro ve yönetim' },
     { id: 'SERVICE_ADVISOR', label: 'Servis Danışmanı', desc: 'Kabul, teklif, müşteri ilişkileri' },
     { id: 'TECHNICIAN', label: 'Teknisyen (Usta)', desc: 'İş listesi, süre, parça talebi' },
@@ -35,7 +58,6 @@ export const Header: React.FC<Props> = ({
     { id: 'ACCOUNTANT', label: 'Muhasebe & Finans', desc: 'Kasa, cari, fatura, e-belge' },
     { id: 'TIRE_SPECIALIST', label: 'Lastik Oteli Sorumlusu', desc: 'Lastik kabul, raf, sezonluk çağrı' },
     { id: 'FLEET_MANAGER', label: 'Filo Yöneticisi (B2B)', desc: 'Filo portalı ve onaylar' },
-    { id: 'SUPER_ADMIN', label: 'SaaS Super Admin', desc: 'Tüm tenantlar, paketler, audit' },
   ];
 
   return (
@@ -134,7 +156,7 @@ export const Header: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* Right: Quick Actions & Role Switcher */}
+      {/* Right: Quick Actions, Google Sign-In & Role Switcher */}
       <div className="flex items-center gap-2">
         {/* Quick Action: New Vehicle Intake */}
         <button
@@ -145,14 +167,57 @@ export const Header: React.FC<Props> = ({
           <span className="hidden sm:inline">Araç Kabul Aç</span>
         </button>
 
-        {/* Quick Action: New Appointment */}
-        <button
-          onClick={onOpenNewAppointment}
-          className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 font-semibold text-xs transition-all"
-        >
-          <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Yeni Randevu</span>
-        </button>
+        {/* Google Sign In / User Profile */}
+        {firebaseUser ? (
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
+            {firebaseUser.photoURL ? (
+              <img
+                src={firebaseUser.photoURL}
+                alt={firebaseUser.displayName || 'User'}
+                className="w-6 h-6 rounded-full border border-slate-700 object-cover"
+              />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold text-xs">
+                {currentUser.name.charAt(0)}
+              </div>
+            )}
+            <div className="hidden lg:block text-left">
+              <div className="text-[11px] font-bold text-slate-100 flex items-center gap-1">
+                <span>{firebaseUser.displayName || currentUser.name}</span>
+                {isSuperAdmin && (
+                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold">
+                    SUPER ADMIN
+                  </span>
+                )}
+              </div>
+              <div className="text-[10px] text-slate-400 truncate max-w-[120px] font-mono">
+                {firebaseUser.email}
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-slate-400 hover:text-rose-400 p-1 transition-colors"
+              title="Çıkış Yap"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleGoogleLogin}
+            disabled={isLoggingIn}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs shadow-md transition-all active:scale-95"
+            title="Google ile Giriş Yap"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.27 21.36 7.35 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.98 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.27 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <span>{isLoggingIn ? 'Giriş...' : 'Google ile Giriş'}</span>
+          </button>
+        )}
 
         {/* Role Switcher Dropdown (Simulator) */}
         <div className="relative">
@@ -161,7 +226,11 @@ export const Header: React.FC<Props> = ({
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left"
           >
             <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 text-xs font-bold">
-              <UserCheck className="w-4 h-4 text-amber-400" />
+              {currentUser.role === 'SUPER_ADMIN' ? (
+                <Shield className="w-4 h-4 text-purple-400" />
+              ) : (
+                <UserCheck className="w-4 h-4 text-amber-400" />
+              )}
             </div>
             <div className="hidden xl:block">
               <div className="text-xs font-bold text-slate-200 flex items-center gap-1">
@@ -175,8 +244,8 @@ export const Header: React.FC<Props> = ({
           {roleDropdownOpen && (
             <div className="absolute top-full right-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50">
               <div className="text-[11px] font-bold text-slate-400 px-3 py-1.5 uppercase tracking-wider flex items-center justify-between">
-                <span>Rol Simülatörü</span>
-                <span className="text-[10px] text-brand-400 font-normal">RBAC Test</span>
+                <span>Rol & Yetki Simülatörü</span>
+                <span className="text-[10px] text-brand-400 font-normal">RBAC</span>
               </div>
               <div className="space-y-1 max-h-96 overflow-y-auto">
                 {rolesList.map(r => (
@@ -188,7 +257,7 @@ export const Header: React.FC<Props> = ({
                     }}
                     className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all ${
                       currentUser.role === r.id
-                        ? 'bg-amber-500/10 border border-amber-500/30 text-amber-200'
+                        ? 'bg-purple-500/10 border border-purple-500/30 text-purple-200'
                         : 'text-slate-300 hover:bg-slate-800'
                     }`}
                   >
@@ -196,7 +265,7 @@ export const Header: React.FC<Props> = ({
                       <div className="text-xs font-bold">{r.label}</div>
                       <div className="text-[11px] text-slate-400">{r.desc}</div>
                     </div>
-                    {currentUser.role === r.id && <Check className="w-4 h-4 text-amber-400" />}
+                    {currentUser.role === r.id && <Check className="w-4 h-4 text-purple-400" />}
                   </button>
                 ))}
               </div>

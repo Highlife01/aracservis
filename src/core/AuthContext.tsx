@@ -1,9 +1,20 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { INITIAL_USERS } from '../services/mockSeedData';
+import { auth, googleProvider, isSuperAdminEmail } from './firebase';
+import { 
+  signInWithPopup, 
+  signOut as firebaseSignOut, 
+  onAuthStateChanged, 
+  User as FirebaseUser 
+} from 'firebase/auth';
 
 interface AuthContextType {
   currentUser: User;
+  firebaseUser: FirebaseUser | null;
+  loading: boolean;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
   switchRole: (role: UserRole) => void;
   switchUser: (userId: string) => void;
   availableUsers: User[];
@@ -14,13 +25,87 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User>(INITIAL_USERS[0]);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User>({
+    ...INITIAL_USERS[0],
+    email: 'cebrailkara@gmail.com',
+    name: 'Cebrail Kara (Super Admin)',
+    role: 'SUPER_ADMIN'
+  });
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      if (user) {
+        const isSuper = isSuperAdminEmail(user.email);
+        setCurrentUser({
+          id: user.uid,
+          tenantId: 'tenant-usta',
+          name: user.displayName || user.email?.split('@')[0] || 'Kullanıcı',
+          email: user.email || '',
+          avatarUrl: user.photoURL || undefined,
+          role: isSuper ? 'SUPER_ADMIN' : 'TENANT_OWNER',
+          status: 'ACTIVE',
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        // Default to Super Admin for Cebrail Kara
+        setCurrentUser({
+          ...INITIAL_USERS[0],
+          email: 'cebrailkara@gmail.com',
+          name: 'Cebrail Kara (Super Admin)',
+          role: 'SUPER_ADMIN'
+        });
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const loginWithGoogle = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const isSuper = isSuperAdminEmail(user.email);
+
+      setCurrentUser({
+        id: user.uid,
+        tenantId: 'tenant-usta',
+        name: user.displayName || user.email?.split('@')[0] || 'Kullanıcı',
+        email: user.email || '',
+        avatarUrl: user.photoURL || undefined,
+        role: isSuper ? 'SUPER_ADMIN' : 'TENANT_OWNER',
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Google Sign In Error:', error);
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await firebaseSignOut(auth);
+      setFirebaseUser(null);
+      setCurrentUser({
+        ...INITIAL_USERS[0],
+        email: 'cebrailkara@gmail.com',
+        name: 'Cebrail Kara (Super Admin)',
+        role: 'SUPER_ADMIN'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const switchRole = (role: UserRole) => {
     setCurrentUser(prev => ({
       ...prev,
       role,
-      name: role === 'SUPER_ADMIN' ? 'SaaS Super Admin' : 
+      name: role === 'SUPER_ADMIN' ? 'Cebrail Kara (Super Admin)' : 
             role === 'TENANT_OWNER' ? 'Ahmet Yılmaz (İşletme Sahibi)' :
             role === 'SERVICE_ADVISOR' ? 'Murat Danışman (Servis Danışmanı)' :
             role === 'TECHNICIAN' ? 'Kemal Teknisyen (Usta)' :
@@ -35,11 +120,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (found) setCurrentUser(found);
   };
 
-  const isSuperAdmin = currentUser.role === 'SUPER_ADMIN';
+  const isSuperAdmin = currentUser.role === 'SUPER_ADMIN' || isSuperAdminEmail(currentUser.email);
 
   const canAccessModule = (moduleName: string): boolean => {
+    if (isSuperAdmin) return true;
     const role = currentUser.role;
-    if (role === 'SUPER_ADMIN' || role === 'TENANT_OWNER' || role === 'TENANT_MANAGER') return true;
+    if (role === 'TENANT_OWNER' || role === 'TENANT_MANAGER') return true;
     
     switch (moduleName) {
       case 'WORK_ORDERS':
@@ -71,6 +157,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         currentUser,
+        firebaseUser,
+        loading,
+        loginWithGoogle,
+        logout,
         switchRole,
         switchUser,
         availableUsers: INITIAL_USERS,
