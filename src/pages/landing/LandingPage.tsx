@@ -22,7 +22,6 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [activeFaqIndex, setActiveFaqIndex] = useState<number | null>(0);
-  const [pricingPeriod, setPricingPeriod] = useState<'MONTHLY' | 'ANNUAL'>('ANNUAL');
   
   // Interactive Hero Preview Tab
   const [heroTab, setHeroTab] = useState<'KANBAN' | 'DAMAGE_CANVAS' | 'WHATSAPP' | 'BAYS'>('KANBAN');
@@ -752,196 +751,111 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
 
       {/* ════════════════════════ PRICING ════════════════════════ */}
       <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 relative bg-slate-50 border-t border-slate-200">
-        <div className="max-w-6xl mx-auto space-y-16">
-          <div className="text-center space-y-4">
+        <div className="max-w-4xl mx-auto space-y-12">
+          <div className="text-center space-y-3">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-extrabold">
-              <Award className="w-3.5 h-3.5" />
-              <span>Şeffaf & Esnek Fiyatlandırma</span>
+              <Award className="w-3.5 h-3.5 text-brand-600" />
+              <span>Şeffaf & Tek Fiyat Politikası</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight">
-              İşletmenizin Büyüklüğüne Uygun Paketi Seçin
+              Her Şey Dahil Tek Fiyat: <span className="text-brand-600 font-mono">799 ₺</span> / Ay
             </h2>
-            <p className="text-sm text-slate-600 max-w-md mx-auto">
-              Gizli ücret yok, kurulum masrafı yok. 60 gün ücretsiz deneyin.
+            <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto">
+              Karmaşık paketler, gizli ücretler veya modül kısıtlaması yok. Tüm 45+ modül tek bir abonelikte sınırsızca elinizin altında.
             </p>
-
-            {/* Monthly / Annual Toggle */}
-            <div className="inline-flex items-center gap-3 bg-white p-1.5 rounded-2xl border border-slate-300 text-xs font-bold mt-4 shadow-sm">
-              <button
-                onClick={() => setPricingPeriod('MONTHLY')}
-                className={`px-4 py-2 rounded-xl transition-all ${
-                  pricingPeriod === 'MONTHLY' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-950'
-                }`}
-              >
-                Aylık Ödeme
-              </button>
-              <button
-                onClick={() => setPricingPeriod('ANNUAL')}
-                className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
-                  pricingPeriod === 'ANNUAL' ? 'bg-brand-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-950'
-                }`}
-              >
-                <span>Yıllık Ödeme</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-white font-black text-[9px]">%20 İndirim</span>
-              </button>
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Starter Plan */}
-            <div className="p-8 rounded-[2rem] bg-white border border-slate-200 space-y-6 flex flex-col justify-between hover:border-slate-300 hover:shadow-xl transition-all">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-xl font-bold text-slate-900">Başlangıç (Starter)</h3>
-                  <p className="text-xs text-slate-500">Tek şubeli küçük oto servisler için</p>
-                </div>
-
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-black text-slate-900">
-                    {pricingPeriod === 'ANNUAL' ? '1.190' : '1.490'}
-                  </span>
-                  <span className="text-xs text-slate-500 font-bold pb-1">₺ / ay</span>
-                </div>
-
-                <ul className="space-y-3 text-xs text-slate-700">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>1 Şube, 3 Kullanıcı Hesabı</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>2D Hasar Tuvali & Dijital Araç Kabul</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>İş Emri Yönetimi & Kanban Panosu</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>Müşteri CRM & 360° Araç Dosyaları</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>Markalı Online Randevu Sayfası</span>
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                onClick={firebaseUser ? onEnterPanel : handleLogin}
-                className="w-full py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs transition-all shadow-xs"
-              >
-                60 Gün Ücretsiz Başla
-              </button>
+          {/* Master Single Pricing Card */}
+          <div className="p-8 sm:p-12 rounded-[2.5rem] bg-white border-2 border-brand-500 shadow-2xl shadow-brand-100 relative ring-4 ring-brand-50 space-y-8">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1 rounded-full bg-gradient-to-r from-brand-600 to-sky-600 text-white text-xs font-black tracking-wider shadow-md">
+              60 GÜN TAMAMEN ÜCRETSİZ DENE
             </div>
 
-            {/* Professional Plan (Popular) */}
-            <div className="relative p-8 rounded-[2rem] bg-white border-2 border-brand-500 shadow-2xl shadow-brand-100 space-y-6 flex flex-col justify-between scale-[1.03] ring-4 ring-brand-50">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-brand-600 to-sky-600 text-white text-[10px] font-black tracking-wider shadow-md">
-                EN ÇOK TERCİH EDİLEN
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-slate-200">
+              <div>
+                <div className="text-xs font-extrabold text-brand-600 uppercase tracking-wider font-mono">
+                  AUTOSERVICE OS FULL ENTERPRISE SUITE
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-1">
+                  Tüm Özellikler Sınırsız & Eksiksiz
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Kullanıcı sınırı yok • Şube sınırı yok • İş emri limiti yok
+                </p>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-xl font-bold text-slate-900">Profesyonel (Pro)</h3>
-                  <p className="text-xs text-slate-500">Büyüyen servisler ve kapsamlı atölyeler</p>
-                </div>
-
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-black text-brand-600">
-                    {pricingPeriod === 'ANNUAL' ? '2.790' : '3.490'}
+              <div className="text-left md:text-right">
+                <div className="flex items-baseline md:justify-end gap-1.5">
+                  <span className="text-5xl sm:text-6xl font-black text-slate-950 font-mono tracking-tight">
+                    799
                   </span>
-                  <span className="text-xs text-slate-500 font-bold pb-1">₺ / ay</span>
+                  <div className="text-left">
+                    <span className="text-lg font-black text-brand-600">₺</span>
+                    <div className="text-[11px] text-slate-500 font-bold">/ ay (Sabit Fiyat)</div>
+                  </div>
                 </div>
-
-                <ul className="space-y-3 text-xs text-slate-700">
-                  <li className="flex items-center gap-2 font-bold text-brand-700">
-                    <CheckCircle className="w-4 h-4 text-brand-600" />
-                    <span>Başlangıç paketindeki tüm özellikler</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>3 Şube, 10 Kullanıcı & Teknisyen</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>WhatsApp Kalem Kalem Teklif Onayı</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>Lastik Oteli & Sezonluk WhatsApp Çağrısı</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>GİB e-Fatura / e-Arşiv Entegrasyonu</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>Stok, Barkod & Yedek Parça ERP</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>Gelişmiş Raporlar & Kârlılık Analizi</span>
-                  </li>
-                </ul>
+                <div className="text-[11px] text-emerald-600 font-bold mt-1">
+                  ✓ İlk 60 Gün Sıfır Maliyet • Kredi Kartı Gerekmez
+                </div>
               </div>
-
-              <button
-                onClick={firebaseUser ? onEnterPanel : handleLogin}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-600 to-sky-600 hover:brightness-105 text-white font-extrabold text-xs transition-all shadow-lg shadow-brand-500/25 active:scale-95"
-              >
-                60 Gün Ücretsiz Başla →
-              </button>
             </div>
 
-            {/* Enterprise Plan */}
-            <div className="p-8 rounded-[2rem] bg-white border border-slate-200 space-y-6 flex flex-col justify-between hover:border-slate-300 hover:shadow-xl transition-all">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-xl font-bold text-slate-900">Kurumsal & Filo</h3>
-                  <p className="text-xs text-slate-500">Filo bakım firmaları ve servis ağları</p>
-                </div>
+            {/* Feature Checklist (Grid 2 columns) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-700">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>2D Hasar Çizimli</b> Dijital Araç Kabul & Tutanak</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>WhatsApp</b> Kalem Kalem Teklif Onay Portalı</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>Lastik Oteli</b>, DOT, Raf & Sezonluk WhatsApp Çağrısı</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>GİB e-Fatura, e-Arşiv</b> & VKN Mükellef Doğrulama</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>Karekodlu (QR)</b> Anahtarlık & Torpido Takip Etiketleri</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>Müşteri Canlı Servis Durumu</b> Takip Portalı</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>Periyodik Km & Bakım</b> Otomatik Hesaplama Motoru</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>Yedek Parça, Stok ERP</b>, Barkod & Çoklu Depo</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>Canlı Lift Matrisi</b> & Teknisyen Süre Takibi (Labor Clocking)</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span><b>Sınırsız Kullanıcı</b>, Sınırsız Teknisyen & Şube</span>
+              </div>
+            </div>
 
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-black text-slate-900">
-                    {pricingPeriod === 'ANNUAL' ? '6.390' : '7.990'}
-                  </span>
-                  <span className="text-xs text-slate-500 font-bold pb-1">₺ / ay</span>
-                </div>
-
-                <ul className="space-y-3 text-xs text-slate-700">
-                  <li className="flex items-center gap-2 font-bold text-purple-700">
-                    <CheckCircle className="w-4 h-4 text-purple-600" />
-                    <span>Profesyonel paketindeki tüm özellikler</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>Sınırsız Şube & Sınırsız Kullanıcı</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>Kurumsal B2B Filo Portalı</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>Franchise & Çoklu Şube Konsolidasyonu</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>REST API & ERP Entegrasyonları</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>7/24 Özel Müşteri Temsilcisi</span>
-                  </li>
-                </ul>
+            {/* Bottom Big CTA */}
+            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs text-slate-500 text-center sm:text-left">
+                <span>Dilediğiniz an iptal edebilirsiniz. Verileriniz %100 güvendedir.</span>
               </div>
 
               <button
                 onClick={firebaseUser ? onEnterPanel : handleLogin}
-                className="w-full py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs transition-all shadow-xs"
+                className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-gradient-to-r from-brand-600 via-sky-600 to-indigo-600 hover:brightness-105 text-white font-black text-sm shadow-xl shadow-brand-500/25 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
-                Satış Ekibiyle Görüş
+                <span>{firebaseUser ? 'Yönetim Paneline Git' : 'Google ile 60 Gün Ücretsiz Başla'}</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
