@@ -10,44 +10,24 @@ import {
 import { FirestoreService } from './firestoreService';
 import { Unsubscribe } from 'firebase/firestore';
 
-const STORAGE_KEYS = {
-  TENANTS: 'autoservice_tenants',
-  ACTIVE_TENANT_ID: 'autoservice_active_tenant_id',
-  USERS: 'autoservice_users',
-  CUSTOMERS: 'autoservice_customers',
-  VEHICLES: 'autoservice_vehicles',
-  WORK_ORDERS: 'autoservice_work_orders',
-  INVENTORY: 'autoservice_inventory',
-  TIRE_HOTEL: 'autoservice_tire_hotel',
-  APPOINTMENTS: 'autoservice_appointments',
-  BAYS: 'autoservice_bays',
-  PAYMENTS: 'autoservice_payments',
-  AUTOMATIONS: 'autoservice_automations',
-  AUDIT_LOGS: 'autoservice_audit_logs',
-};
-
 class DataStore {
   private listeners: Set<() => void> = new Set();
   private unsubs: Unsubscribe[] = [];
 
-  private get<T>(key: string, defaultVal: T): T {
-    try {
-      const data = localStorage.getItem(key);
-      if (!data) return defaultVal;
-      return JSON.parse(data) as T;
-    } catch {
-      return defaultVal;
-    }
-  }
-
-  private set<T>(key: string, val: T): void {
-    try {
-      localStorage.setItem(key, JSON.stringify(val));
-      this.notifyListeners();
-    } catch (e) {
-      console.error('LocalStorage write error', e);
-    }
-  }
+  // Pure In-Memory Reactive Cache (No LocalStorage)
+  private activeTenantId: string = 'tenant-usta';
+  private tenants: Tenant[] = INITIAL_TENANTS;
+  private users: User[] = INITIAL_USERS;
+  private customers: Customer[] = INITIAL_CUSTOMERS;
+  private vehicles: Vehicle[] = INITIAL_VEHICLES;
+  private workOrders: WorkOrder[] = INITIAL_WORK_ORDERS;
+  private inventory: InventoryItem[] = INITIAL_INVENTORY;
+  private tireHotel: TireHotelRecord[] = INITIAL_TIRE_HOTEL;
+  private appointments: Appointment[] = INITIAL_APPOINTMENTS;
+  private bays: WorkshopBay[] = INITIAL_BAYS;
+  private payments: Payment[] = INITIAL_PAYMENTS;
+  private automations: AutomationRule[] = INITIAL_AUTOMATIONS;
+  private auditLogs: AuditLog[] = [];
 
   public subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
@@ -60,210 +40,241 @@ class DataStore {
     });
   }
 
-  // Initialize store if empty
   public init() {
-    if (!localStorage.getItem(STORAGE_KEYS.TENANTS)) {
-      this.set(STORAGE_KEYS.TENANTS, INITIAL_TENANTS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.ACTIVE_TENANT_ID)) {
-      this.set(STORAGE_KEYS.ACTIVE_TENANT_ID, 'tenant-usta');
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-      this.set(STORAGE_KEYS.USERS, INITIAL_USERS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CUSTOMERS)) {
-      this.set(STORAGE_KEYS.CUSTOMERS, INITIAL_CUSTOMERS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.VEHICLES)) {
-      this.set(STORAGE_KEYS.VEHICLES, INITIAL_VEHICLES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.WORK_ORDERS)) {
-      this.set(STORAGE_KEYS.WORK_ORDERS, INITIAL_WORK_ORDERS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.INVENTORY)) {
-      this.set(STORAGE_KEYS.INVENTORY, INITIAL_INVENTORY);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.TIRE_HOTEL)) {
-      this.set(STORAGE_KEYS.TIRE_HOTEL, INITIAL_TIRE_HOTEL);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.APPOINTMENTS)) {
-      this.set(STORAGE_KEYS.APPOINTMENTS, INITIAL_APPOINTMENTS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.BAYS)) {
-      this.set(STORAGE_KEYS.BAYS, INITIAL_BAYS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.PAYMENTS)) {
-      this.set(STORAGE_KEYS.PAYMENTS, INITIAL_PAYMENTS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.AUTOMATIONS)) {
-      this.set(STORAGE_KEYS.AUTOMATIONS, INITIAL_AUTOMATIONS);
-    }
+    // Initial in-memory boot
+    this.startRealtimeSync(this.activeTenantId);
   }
 
   /**
    * Start live Real-time Firestore synchronization for the active tenant
+   * All data streams straight from Cloud Firestore without localStorage
    */
   public startRealtimeSync(tenantId: string) {
     this.stopRealtimeSync();
+    this.activeTenantId = tenantId;
 
-    // Subscribe to Work Orders
+    // 1. Subscribe to Work Orders
     const unSubWO = FirestoreService.subscribeToTenantCollection<WorkOrder>(
       FirestoreService.COLLECTIONS.WORK_ORDERS,
       tenantId,
       (cloudWOs) => {
         if (cloudWOs && cloudWOs.length > 0) {
-          const local = this.getWorkOrders();
-          const merged = this.mergeCollections(local, cloudWOs, tenantId);
-          this.set(STORAGE_KEYS.WORK_ORDERS, merged);
+          this.workOrders = cloudWOs;
+        } else {
+          // Seed to Firestore if collection is empty on first run
+          const seed = INITIAL_WORK_ORDERS.filter(w => w.tenantId === tenantId);
+          if (seed.length > 0) {
+            FirestoreService.saveDocumentsBatch(FirestoreService.COLLECTIONS.WORK_ORDERS, seed);
+          }
         }
+        this.notifyListeners();
       }
     );
     this.unsubs.push(unSubWO);
 
-    // Subscribe to Vehicles
+    // 2. Subscribe to Vehicles
     const unSubVeh = FirestoreService.subscribeToTenantCollection<Vehicle>(
       FirestoreService.COLLECTIONS.VEHICLES,
       tenantId,
       (cloudVehs) => {
         if (cloudVehs && cloudVehs.length > 0) {
-          const local = this.getVehicles();
-          const merged = this.mergeCollections(local, cloudVehs, tenantId);
-          this.set(STORAGE_KEYS.VEHICLES, merged);
+          this.vehicles = cloudVehs;
+        } else {
+          const seed = INITIAL_VEHICLES.filter(v => v.tenantId === tenantId);
+          if (seed.length > 0) {
+            FirestoreService.saveDocumentsBatch(FirestoreService.COLLECTIONS.VEHICLES, seed);
+          }
         }
+        this.notifyListeners();
       }
     );
     this.unsubs.push(unSubVeh);
 
-    // Subscribe to Customers
+    // 3. Subscribe to Customers
     const unSubCust = FirestoreService.subscribeToTenantCollection<Customer>(
       FirestoreService.COLLECTIONS.CUSTOMERS,
       tenantId,
       (cloudCusts) => {
         if (cloudCusts && cloudCusts.length > 0) {
-          const local = this.getCustomers();
-          const merged = this.mergeCollections(local, cloudCusts, tenantId);
-          this.set(STORAGE_KEYS.CUSTOMERS, merged);
+          this.customers = cloudCusts;
+        } else {
+          const seed = INITIAL_CUSTOMERS.filter(c => c.tenantId === tenantId);
+          if (seed.length > 0) {
+            FirestoreService.saveDocumentsBatch(FirestoreService.COLLECTIONS.CUSTOMERS, seed);
+          }
         }
+        this.notifyListeners();
       }
     );
     this.unsubs.push(unSubCust);
 
-    // Subscribe to Appointments
+    // 4. Subscribe to Inventory
+    const unSubInv = FirestoreService.subscribeToTenantCollection<InventoryItem>(
+      FirestoreService.COLLECTIONS.INVENTORY,
+      tenantId,
+      (cloudInv) => {
+        if (cloudInv && cloudInv.length > 0) {
+          this.inventory = cloudInv;
+        } else {
+          const seed = INITIAL_INVENTORY.filter(i => i.tenantId === tenantId);
+          if (seed.length > 0) {
+            FirestoreService.saveDocumentsBatch(FirestoreService.COLLECTIONS.INVENTORY, seed);
+          }
+        }
+        this.notifyListeners();
+      }
+    );
+    this.unsubs.push(unSubInv);
+
+    // 5. Subscribe to Appointments
     const unSubApt = FirestoreService.subscribeToTenantCollection<Appointment>(
       FirestoreService.COLLECTIONS.APPOINTMENTS,
       tenantId,
       (cloudApts) => {
         if (cloudApts && cloudApts.length > 0) {
-          const local = this.getAppointments();
-          const merged = this.mergeCollections(local, cloudApts, tenantId);
-          this.set(STORAGE_KEYS.APPOINTMENTS, merged);
+          this.appointments = cloudApts;
+        } else {
+          const seed = INITIAL_APPOINTMENTS.filter(a => a.tenantId === tenantId);
+          if (seed.length > 0) {
+            FirestoreService.saveDocumentsBatch(FirestoreService.COLLECTIONS.APPOINTMENTS, seed);
+          }
         }
+        this.notifyListeners();
       }
     );
     this.unsubs.push(unSubApt);
 
-    // Subscribe to Bays
+    // 6. Subscribe to Bays
     const unSubBays = FirestoreService.subscribeToTenantCollection<WorkshopBay>(
       FirestoreService.COLLECTIONS.BAYS,
       tenantId,
       (cloudBays) => {
         if (cloudBays && cloudBays.length > 0) {
-          const local = this.getBays();
-          const merged = this.mergeCollections(local, cloudBays, tenantId);
-          this.set(STORAGE_KEYS.BAYS, merged);
+          this.bays = cloudBays;
+        } else {
+          const seed = INITIAL_BAYS.filter(b => b.tenantId === tenantId);
+          if (seed.length > 0) {
+            FirestoreService.saveDocumentsBatch(FirestoreService.COLLECTIONS.BAYS, seed);
+          }
         }
+        this.notifyListeners();
       }
     );
     this.unsubs.push(unSubBays);
 
-    // Subscribe to Payments
+    // 7. Subscribe to Payments
     const unSubPay = FirestoreService.subscribeToTenantCollection<Payment>(
       FirestoreService.COLLECTIONS.PAYMENTS,
       tenantId,
       (cloudPays) => {
         if (cloudPays && cloudPays.length > 0) {
-          const local = this.getPayments();
-          const merged = this.mergeCollections(local, cloudPays, tenantId);
-          this.set(STORAGE_KEYS.PAYMENTS, merged);
+          this.payments = cloudPays;
+        } else {
+          const seed = INITIAL_PAYMENTS.filter(p => p.tenantId === tenantId);
+          if (seed.length > 0) {
+            FirestoreService.saveDocumentsBatch(FirestoreService.COLLECTIONS.PAYMENTS, seed);
+          }
         }
+        this.notifyListeners();
       }
     );
     this.unsubs.push(unSubPay);
+
+    // 8. Subscribe to Tire Hotel
+    const unSubTire = FirestoreService.subscribeToTenantCollection<TireHotelRecord>(
+      FirestoreService.COLLECTIONS.TIRE_HOTEL,
+      tenantId,
+      (cloudTire) => {
+        if (cloudTire && cloudTire.length > 0) {
+          this.tireHotel = cloudTire;
+        } else {
+          const seed = INITIAL_TIRE_HOTEL.filter(t => t.tenantId === tenantId);
+          if (seed.length > 0) {
+            FirestoreService.saveDocumentsBatch(FirestoreService.COLLECTIONS.TIRE_HOTEL, seed);
+          }
+        }
+        this.notifyListeners();
+      }
+    );
+    this.unsubs.push(unSubTire);
+
+    // 9. Subscribe to Audit Logs
+    const unSubLogs = FirestoreService.subscribeToTenantCollection<AuditLog>(
+      FirestoreService.COLLECTIONS.AUDIT_LOGS,
+      tenantId,
+      (cloudLogs) => {
+        this.auditLogs = cloudLogs;
+        this.notifyListeners();
+      }
+    );
+    this.unsubs.push(unSubLogs);
   }
 
   public stopRealtimeSync() {
-    this.unsubs.forEach(fn => fn());
+    this.unsubs.forEach(fn => {
+      try { fn(); } catch (e) { console.error('Unsub error', e); }
+    });
     this.unsubs = [];
-  }
-
-  private mergeCollections<T extends { id: string; tenantId?: string }>(local: T[], cloud: T[], tenantId: string): T[] {
-    const otherTenants = local.filter(item => item.tenantId && item.tenantId !== tenantId);
-    const map = new Map<string, T>();
-    cloud.forEach(c => map.set(c.id, c));
-    return [...otherTenants, ...Array.from(map.values())];
   }
 
   // --- Active Tenant ID ---
   public getActiveTenantId(): string {
-    return this.get<string>(STORAGE_KEYS.ACTIVE_TENANT_ID, 'tenant-usta');
+    return this.activeTenantId;
   }
 
   public setActiveTenantId(tenantId: string): void {
-    this.set(STORAGE_KEYS.ACTIVE_TENANT_ID, tenantId);
+    this.activeTenantId = tenantId;
     this.startRealtimeSync(tenantId);
+    this.notifyListeners();
   }
 
   // --- Tenants ---
   public getTenants(): Tenant[] {
-    return this.get<Tenant[]>(STORAGE_KEYS.TENANTS, INITIAL_TENANTS);
+    return this.tenants;
   }
 
   public getTenantById(id: string): Tenant | undefined {
-    return this.getTenants().find(t => t.id === id);
+    return this.tenants.find(t => t.id === id);
   }
 
   public getTenantBySlug(slug: string): Tenant | undefined {
-    return this.getTenants().find(t => t.slug === slug);
+    return this.tenants.find(t => t.slug === slug);
   }
 
   public saveTenant(tenant: Tenant): void {
-    const list = this.getTenants();
-    const idx = list.findIndex(t => t.id === tenant.id);
-    if (idx >= 0) list[idx] = tenant;
-    else list.push(tenant);
-    this.set(STORAGE_KEYS.TENANTS, list);
+    const idx = this.tenants.findIndex(t => t.id === tenant.id);
+    if (idx >= 0) this.tenants[idx] = tenant;
+    else this.tenants.push(tenant);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.TENANTS, tenant);
   }
 
   // --- Customers ---
   public getCustomers(tenantId?: string): Customer[] {
-    const list = this.get<Customer[]>(STORAGE_KEYS.CUSTOMERS, INITIAL_CUSTOMERS);
-    if (!tenantId) return list;
-    return list.filter(c => c.tenantId === tenantId);
+    if (!tenantId) return this.customers;
+    return this.customers.filter(c => c.tenantId === tenantId);
   }
 
   public getCustomerById(id: string): Customer | undefined {
-    return this.getCustomers().find(c => c.id === id);
+    return this.customers.find(c => c.id === id);
   }
 
   public saveCustomer(customer: Customer): void {
-    const list = this.getCustomers();
-    const idx = list.findIndex(c => c.id === customer.id);
-    if (idx >= 0) list[idx] = customer;
-    else list.push(customer);
-    this.set(STORAGE_KEYS.CUSTOMERS, list);
+    const idx = this.customers.findIndex(c => c.id === customer.id);
+    if (idx >= 0) this.customers[idx] = customer;
+    else this.customers.push(customer);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.CUSTOMERS, customer);
   }
 
   // --- Vehicles ---
   public getVehicles(tenantId?: string): Vehicle[] {
-    const list = this.get<Vehicle[]>(STORAGE_KEYS.VEHICLES, INITIAL_VEHICLES);
-    if (!tenantId) return list;
-    return list.filter(v => v.tenantId === tenantId);
+    if (!tenantId) return this.vehicles;
+    return this.vehicles.filter(v => v.tenantId === tenantId);
   }
 
   public getVehicleById(id: string): Vehicle | undefined {
-    return this.getVehicles().find(v => v.id === id);
+    return this.vehicles.find(v => v.id === id);
   }
 
   public getVehicleByPlate(plate: string, tenantId?: string): Vehicle | undefined {
@@ -272,55 +283,49 @@ class DataStore {
   }
 
   public saveVehicle(vehicle: Vehicle): void {
-    const list = this.getVehicles();
-    const idx = list.findIndex(v => v.id === vehicle.id);
-    if (idx >= 0) list[idx] = vehicle;
-    else list.push(vehicle);
-    this.set(STORAGE_KEYS.VEHICLES, list);
+    const idx = this.vehicles.findIndex(v => v.id === vehicle.id);
+    if (idx >= 0) this.vehicles[idx] = vehicle;
+    else this.vehicles.push(vehicle);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.VEHICLES, vehicle);
   }
 
   // --- Work Orders ---
   public getWorkOrders(tenantId?: string): WorkOrder[] {
-    const list = this.get<WorkOrder[]>(STORAGE_KEYS.WORK_ORDERS, INITIAL_WORK_ORDERS);
-    if (!tenantId) return list;
-    return list.filter(w => w.tenantId === tenantId);
+    if (!tenantId) return this.workOrders;
+    return this.workOrders.filter(w => w.tenantId === tenantId);
   }
 
   public getWorkOrderById(id: string): WorkOrder | undefined {
-    return this.getWorkOrders().find(w => w.id === id);
+    return this.workOrders.find(w => w.id === id);
   }
 
   public saveWorkOrder(workOrder: WorkOrder): void {
-    const list = this.getWorkOrders();
-    const idx = list.findIndex(w => w.id === workOrder.id);
-    if (idx >= 0) list[idx] = workOrder;
-    else list.push(workOrder);
-    this.set(STORAGE_KEYS.WORK_ORDERS, list);
+    const idx = this.workOrders.findIndex(w => w.id === workOrder.id);
+    if (idx >= 0) this.workOrders[idx] = workOrder;
+    else this.workOrders.push(workOrder);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.WORK_ORDERS, workOrder);
   }
 
   // --- Inventory ---
   public getInventory(tenantId?: string): InventoryItem[] {
-    const list = this.get<InventoryItem[]>(STORAGE_KEYS.INVENTORY, INITIAL_INVENTORY);
-    if (!tenantId) return list;
-    return list.filter(i => i.tenantId === tenantId);
+    if (!tenantId) return this.inventory;
+    return this.inventory.filter(i => i.tenantId === tenantId);
   }
 
   public saveInventoryItem(item: InventoryItem): void {
-    const list = this.getInventory();
-    const idx = list.findIndex(i => i.id === item.id);
-    if (idx >= 0) list[idx] = item;
-    else list.push(item);
-    this.set(STORAGE_KEYS.INVENTORY, list);
+    const idx = this.inventory.findIndex(i => i.id === item.id);
+    if (idx >= 0) this.inventory[idx] = item;
+    else this.inventory.push(item);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.INVENTORY, item);
   }
 
   // --- Tire Hotel ---
   public getTireHotel(tenantId?: string): TireHotelRecord[] {
-    const list = this.get<TireHotelRecord[]>(STORAGE_KEYS.TIRE_HOTEL, INITIAL_TIRE_HOTEL);
-    if (!tenantId) return list;
-    return list.filter(t => t.tenantId === tenantId);
+    if (!tenantId) return this.tireHotel;
+    return this.tireHotel.filter(t => t.tenantId === tenantId);
   }
 
   public getTireHotelRecords(tenantId?: string): TireHotelRecord[] {
@@ -328,11 +333,10 @@ class DataStore {
   }
 
   public saveTireRecord(record: TireHotelRecord): void {
-    const list = this.getTireHotel();
-    const idx = list.findIndex(t => t.id === record.id);
-    if (idx >= 0) list[idx] = record;
-    else list.push(record);
-    this.set(STORAGE_KEYS.TIRE_HOTEL, list);
+    const idx = this.tireHotel.findIndex(t => t.id === record.id);
+    if (idx >= 0) this.tireHotel[idx] = record;
+    else this.tireHotel.push(record);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.TIRE_HOTEL, record);
   }
 
@@ -342,89 +346,78 @@ class DataStore {
 
   // --- Appointments ---
   public getAppointments(tenantId?: string): Appointment[] {
-    const list = this.get<Appointment[]>(STORAGE_KEYS.APPOINTMENTS, INITIAL_APPOINTMENTS);
-    if (!tenantId) return list;
-    return list.filter(a => a.tenantId === tenantId);
+    if (!tenantId) return this.appointments;
+    return this.appointments.filter(a => a.tenantId === tenantId);
   }
 
   public saveAppointment(appointment: Appointment): void {
-    const list = this.getAppointments();
-    const idx = list.findIndex(a => a.id === appointment.id);
-    if (idx >= 0) list[idx] = appointment;
-    else list.push(appointment);
-    this.set(STORAGE_KEYS.APPOINTMENTS, list);
+    const idx = this.appointments.findIndex(a => a.id === appointment.id);
+    if (idx >= 0) this.appointments[idx] = appointment;
+    else this.appointments.push(appointment);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.APPOINTMENTS, appointment);
   }
 
   // --- Bays ---
   public getBays(tenantId?: string): WorkshopBay[] {
-    const list = this.get<WorkshopBay[]>(STORAGE_KEYS.BAYS, INITIAL_BAYS);
-    if (!tenantId) return list;
-    return list.filter(b => b.tenantId === tenantId);
+    if (!tenantId) return this.bays;
+    return this.bays.filter(b => b.tenantId === tenantId);
   }
 
   public saveBay(bay: WorkshopBay): void {
-    const list = this.getBays();
-    const idx = list.findIndex(b => b.id === bay.id);
-    if (idx >= 0) list[idx] = bay;
-    else list.push(bay);
-    this.set(STORAGE_KEYS.BAYS, list);
+    const idx = this.bays.findIndex(b => b.id === bay.id);
+    if (idx >= 0) this.bays[idx] = bay;
+    else this.bays.push(bay);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.BAYS, bay);
   }
 
   // --- Payments ---
   public getPayments(tenantId?: string): Payment[] {
-    const list = this.get<Payment[]>(STORAGE_KEYS.PAYMENTS, INITIAL_PAYMENTS);
-    if (!tenantId) return list;
-    return list.filter(p => p.tenantId === tenantId);
+    if (!tenantId) return this.payments;
+    return this.payments.filter(p => p.tenantId === tenantId);
   }
 
   public savePayment(payment: Payment): void {
-    const list = this.getPayments();
-    const idx = list.findIndex(p => p.id === payment.id);
-    if (idx >= 0) list[idx] = payment;
-    else list.push(payment);
-    this.set(STORAGE_KEYS.PAYMENTS, list);
+    const idx = this.payments.findIndex(p => p.id === payment.id);
+    if (idx >= 0) this.payments[idx] = payment;
+    else this.payments.push(payment);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.PAYMENTS, payment);
   }
 
   // --- Users ---
   public getUsers(tenantId?: string): User[] {
-    const list = this.get<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
-    if (!tenantId) return list;
-    return list.filter(u => u.tenantId === tenantId);
+    if (!tenantId) return this.users;
+    return this.users.filter(u => u.tenantId === tenantId);
   }
 
   public saveUser(user: User): void {
-    const list = this.getUsers();
-    const idx = list.findIndex(u => u.id === user.id);
-    if (idx >= 0) list[idx] = user;
-    else list.push(user);
-    this.set(STORAGE_KEYS.USERS, list);
+    const idx = this.users.findIndex(u => u.id === user.id);
+    if (idx >= 0) this.users[idx] = user;
+    else this.users.push(user);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.USERS, user);
   }
 
   // --- Automations ---
   public getAutomations(tenantId?: string): AutomationRule[] {
-    const list = this.get<AutomationRule[]>(STORAGE_KEYS.AUTOMATIONS, INITIAL_AUTOMATIONS);
-    if (!tenantId) return list;
-    return list.filter(a => a.tenantId === tenantId);
+    if (!tenantId) return this.automations;
+    return this.automations.filter(a => a.tenantId === tenantId);
   }
 
   public saveAutomation(rule: AutomationRule): void {
-    const list = this.getAutomations();
-    const idx = list.findIndex(a => a.id === rule.id);
-    if (idx >= 0) list[idx] = rule;
-    else list.push(rule);
-    this.set(STORAGE_KEYS.AUTOMATIONS, list);
+    const idx = this.automations.findIndex(a => a.id === rule.id);
+    if (idx >= 0) this.automations[idx] = rule;
+    else this.automations.push(rule);
+    this.notifyListeners();
     FirestoreService.saveDocument(FirestoreService.COLLECTIONS.AUTOMATIONS, rule);
   }
 
   // --- Audit Logs ---
   public getAuditLogs(tenantId?: string): AuditLog[] {
-    const list = this.get<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, []);
-    if (!tenantId) return list;
-    return list.filter(l => l.tenantId === tenantId);
+    if (!tenantId) return this.auditLogs;
+    return this.auditLogs.filter(l => l.tenantId === tenantId);
   }
 }
 
