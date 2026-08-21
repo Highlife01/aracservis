@@ -919,7 +919,7 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
       </section>
 
       {/* ════════════════════════ FAQ ACCORDION ════════════════════════ */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 relative bg-slate-100/60 border-t border-slate-200">
+      <section id="faq" className="py-20 px-4 sm:px-6 lg:px-8 relative bg-slate-100/60 border-t border-slate-200">
         <div className="max-w-3xl mx-auto space-y-12">
           <div className="text-center space-y-3">
             <h2 className="text-3xl font-black text-slate-950">Sıkça Sorulan Sorular</h2>
@@ -942,11 +942,11 @@ export const LandingPage: React.FC<Props> = ({ onEnterPanel }) => {
               },
               {
                 q: 'GİB e-Fatura / e-Arşiv entegrasyonu için ekstra ücret var mı?',
-                a: 'Profesyonel ve Kurumsal paketlerimizde GİB uyumlu e-Fatura / e-Arşiv adaptörü ve otomatik VKN mükellef sorgulama yerleşiktir; ekstra entegrasyon ücreti talep edilmez.'
+                a: 'Hayır. 799 ₺ tek fiyat dahilinde GİB uyumlu e-Fatura / e-Arşiv / e-İrsaliye adaptörü ve otomatik VKN mükellef sorgulama yerleşiktir; hiçbir ekstra entegrasyon ücreti talep edilmez.'
               },
               {
                 q: 'Ücretsiz deneme süresi bittiğinde ne olur?',
-                a: '60 günlük deneme süresince hiçbir kredi kartı bilgisi istenmez. Süre sonunda memnun kalırsanız dilediğiniz paketi seçerek çalışmaya devam edebilirsiniz; verileriniz asla silinmez.'
+                a: '60 günlük deneme süresince hiçbir kredi kartı bilgisi istenmez. Süre sonunda memnun kalırsanız aylık 799 ₺ sabit fiyatla çalışmaya devam edebilirsiniz; verileriniz asla silinmez.'
               }
             ].map((faq, i) => (
               <div
