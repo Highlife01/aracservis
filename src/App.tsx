@@ -5,6 +5,7 @@ import { CommandPalette } from './components/common/CommandPalette';
 import { VehicleIntakeModal } from './pages/backoffice/VehicleIntakeModal';
 
 // Pages
+import { LandingPage } from './pages/landing/LandingPage';
 import { ExecutiveDashboard } from './pages/backoffice/ExecutiveDashboard';
 import { AppointmentsPage } from './pages/backoffice/AppointmentsPage';
 import { WorkOrdersListPage } from './pages/backoffice/WorkOrdersListPage';
@@ -24,7 +25,8 @@ import { SuperAdminDashboard } from './pages/superAdmin/SuperAdminDashboard';
 import { PublicTenantLanding } from './pages/publicSite/PublicTenantLanding';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  // Default entry view is the Tanıtım (Marketing Landing) site
+  const [activeTab, setActiveTab] = useState<string>('landing');
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<any>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isIntakeModalOpen, setIsIntakeModalOpen] = useState(false);
@@ -37,6 +39,11 @@ export const App: React.FC = () => {
       setActiveTab(tab);
     }
   };
+
+  // If landing page is active, show the marketing tanıtım site first
+  if (activeTab === 'landing') {
+    return <LandingPage onEnterPanel={() => setActiveTab('dashboard')} />;
+  }
 
   // If public site is open, show customer-facing website directly
   if (activeTab === 'public_site') {

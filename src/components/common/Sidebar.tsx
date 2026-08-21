@@ -80,8 +80,9 @@ export const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     {
       title: 'SİSTEM & YÖNETİM',
       items: [
+        { id: 'landing', label: 'Platform Tanıtım Sitesi', icon: Globe },
+        { id: 'public_site', label: 'Müşteri Randevu Sitesi', icon: Sparkles },
         { id: 'settings', label: 'Şirket & Şube Ayarları', icon: Sliders },
-        { id: 'public_site', label: 'Müşteri Web Sitesi', icon: Globe },
         { id: 'super_admin', label: 'Platform Super Admin', icon: Shield, superAdminOnly: true },
       ]
     }
