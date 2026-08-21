@@ -103,39 +103,39 @@ export const ExecutiveDashboard: React.FC<Props> = ({ onNavigate, onOpenNewIntak
   const lowStockItems = inventory.filter(i => i.stockAvailable <= i.minStockLevel);
 
   // Handle Workflow Status Transition
-  const handleAdvanceStatus = (wo: WorkOrder, targetStatus: any) => {
-    const result = WorkOrderWorkflowEngine.applyTransition(
-      wo, 
-      targetStatus, 
-      { id: 'user-admin', name: 'Servis Yöneticisi', role: 'TENANT_OWNER' },
-      bays
-    );
+  const handleAdvanceStatus = async (wo: WorkOrder, targetStatus: any) => {
+    const result = await WorkOrderWorkflowEngine.transitionWorkOrder({
+      workOrder: wo,
+      toStatus: targetStatus,
+      actor: { id: 'user-admin', name: 'Servis Yöneticisi', role: 'TENANT_OWNER', tenantId: currentTenant.id }
+    });
 
-    if (result.error) {
+    if (!result.success && result.error) {
       if (targetStatus === 'DELIVERED') {
         setTargetWoToDeliver(wo);
         setManagerOverrideModalOpen(true);
       } else {
-        showError('İş Akışı Engeli', result.error);
+        showError('İş Akışı Engeli', result.error.message || 'Geçiş yapılamadı.');
       }
       return;
     }
 
-    store.saveWorkOrder(result.updatedWorkOrder);
-    showSuccess('Statü Güncellendi', `${wo.workOrderNo} durumu "${targetStatus}" olarak güncellendi.`);
+    if (result.workOrder) {
+      showSuccess('Statü Güncellendi', `${wo.workOrderNo} durumu "${targetStatus}" olarak güncellendi.`);
+    }
   };
 
-  const handleManagerOverrideDelivery = () => {
+  const handleManagerOverrideDelivery = async () => {
     if (!targetWoToDeliver) return;
-    const result = WorkOrderWorkflowEngine.applyTransition(
-      targetWoToDeliver,
-      'DELIVERED',
-      { id: 'user-admin', name: 'Servis Yöneticisi', role: 'TENANT_OWNER' },
-      bays,
+    const result = await WorkOrderWorkflowEngine.transitionWorkOrder({
+      workOrder: targetWoToDeliver,
+      toStatus: 'DELIVERED',
+      actor: { id: 'user-admin', name: 'Servis Yöneticisi', role: 'TENANT_OWNER', tenantId: currentTenant.id },
+      overrideApproved: true,
       overrideReason
-    );
-    if (result.updatedWorkOrder) {
-      store.saveWorkOrder(result.updatedWorkOrder);
+    });
+
+    if (result.success) {
       showSuccess('Yetkili Teslimat Yapıldı', `${targetWoToDeliver.workOrderNo} yönetici onayıyla teslim edildi.`);
     }
     setManagerOverrideModalOpen(false);

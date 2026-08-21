@@ -276,6 +276,23 @@ export type WorkOrderStatus =
   | 'CLOSED'
   | 'CANCELLED';
 
+export interface WorkOrderStatusHistory {
+  id: string;
+  workOrderId: string;
+  tenantId: string;
+  branchId: string;
+  fromStatus: WorkOrderStatus | null;
+  toStatus: WorkOrderStatus;
+  reason?: string;
+  transitionType: 'NORMAL' | 'SYSTEM' | 'CUSTOMER' | 'OVERRIDE' | 'ROLLBACK';
+  performedByUserId: string;
+  performedByUserName: string;
+  performedByRole: UserRole;
+  performedAt: string;
+  source: 'WEB' | 'MOBILE' | 'PUBLIC_LINK' | 'API' | 'SYSTEM';
+  metadata?: Record<string, any>;
+}
+
 export interface WorkOrder {
   id: string;
   workOrderNo: string; // e.g. WO-2026-0042
@@ -290,6 +307,17 @@ export interface WorkOrder {
   bayId?: string;
   bayName?: string;
   status: WorkOrderStatus;
+  statusVersion?: number;
+  statusChangedAt?: string;
+  statusChangedBy?: string;
+  currentStepStartedAt?: string;
+  currentStepDueAt?: string;
+  blockedReason?: string;
+  blockedByPartIds?: string[];
+  overrideRequired?: boolean;
+  overrideReason?: string;
+  overrideApprovedBy?: string;
+  statusHistory?: WorkOrderStatusHistory[];
   priority: 'NORMAL' | 'HIGH' | 'URGENT';
   serviceType: 'PERIYODIK_BAKIM' | 'MEKANIK_ONARIM' | 'ELEKTRIK_ELEKTRONIK' | 'LASTIK_ROT' | 'KAPORTA_BOYA' | 'EKSPERTIZE' | 'GARANTI';
   intake?: VehicleIntake;
