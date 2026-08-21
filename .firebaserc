@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "finansarena-bdae9"
+  },
+  "targets": {
+    "finansarena-bdae9": {
+      "hosting": {
+        "aracservis": [
+          "aracservis"
+        ]
+      }
+    }
+  }
+}

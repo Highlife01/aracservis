@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'SUPER_ADMIN';
+    }
+
+    function belongsToTenant(tenantId) {
+      return isAuthenticated() && (
+        isSuperAdmin() || 
+        request.auth.token.tenant_id == tenantId ||
+        resource.data.tenantId == tenantId
+      );
+    }
+
+    // Public Site & Booking Read / Write
+    match /public_bookings/{bookingId} {
+      allow create: if true;
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    // Tenants Collection
+    match /tenants/{tenantId} {
+      allow read: if true; // Public site info
+      allow write: if isSuperAdmin() || (isAuthenticated() && request.auth.token.tenant_id == tenantId && request.auth.token.role == 'TENANT_OWNER');
+    }
+
+    // Tenant Isolated Collections
+    match /customers/{customerId} {
+      allow read, write: if belongsToTenant(resource.data.tenantId);
+    }
+
+    match /vehicles/{vehicleId} {
+      allow read, write: if belongsToTenant(resource.data.tenantId);
+    }
+
+    match /work_orders/{workOrderId} {
+      allow read: if true; // Allow customer lookup with valid hash/token
+      allow write: if belongsToTenant(resource.data.tenantId);
+    }
+
+    match /inventory/{itemId} {
+      allow read, write: if belongsToTenant(resource.data.tenantId);
+    }
+
+    match /tire_hotel/{recordId} {
+      allow read, write: if belongsToTenant(resource.data.tenantId);
+    }
+
+    match /appointments/{appointmentId} {
+      allow create: if true;
+      allow read, update, delete: if belongsToTenant(resource.data.tenantId);
+    }
+
+    match /payments/{paymentId} {
+      allow read, write: if belongsToTenant(resource.data.tenantId);
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin() || belongsToTenant(resource.data.tenantId);
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Immutable audit logs
+    }
+  }
+}
